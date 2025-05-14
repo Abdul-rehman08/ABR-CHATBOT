@@ -152,33 +152,34 @@ if uploaded_files:
     with st.expander("📄 View Combined File Content"):
         st.text_area("File Content", combined_text, height=250)
 
-# --- CONVERSION FUNCTION (FIXED) ---
+# --- CONVERSION FUNCTION ---
 def convert_text_to_file(text, format):
     buf = io.BytesIO()
     filename = f"converted_file.{format}"
 
     if format == "txt":
         buf.write(text.encode("utf-8"))
-
     elif format == "docx":
         doc = Document()
         for line in text.split("\n"):
             doc.add_paragraph(line)
         doc.save(buf)
-
     elif format == "pdf":
         pdf = FPDF()
         pdf.add_page()
         pdf.set_auto_page_break(auto=True, margin=15)
         pdf.set_font("Arial", size=12)
         for line in text.split("\n"):
-            safe_line = line.encode('latin-1', errors='ignore').decode('latin-1')
-            pdf.cell(200, 10, txt=safe_line, ln=True)
-        pdf_bytes = pdf.output(dest="S").encode("latin-1")
-        buf.write(pdf_bytes)
-
+            pdf.cell(200, 10, txt=line.encode('latin-1', errors='ignore').decode('latin-1'), ln=True)
+        pdf.output(buf)
     buf.seek(0)
     return filename, buf
+
+# --- FUNCTION TO TRIM LONG TEXT ---
+MAX_CHARS = 20000  # Keep safely under Gemini input token limit
+
+def trim_text(text, max_chars):
+    return text if len(text) <= max_chars else text[-max_chars:]
 
 # --- CHAT INTERFACE ---
 st.markdown("<h2 style='text-align: center;'>🤖 ABRGPT Chat Assistant</h2>", unsafe_allow_html=True)
@@ -210,9 +211,13 @@ if prompt:
         else:
             st.markdown(f"<div class='chat-bubble-bot'>❌ Could not detect file format. Try saying 'Convert to PDF', 'Make DOCX', etc.</div>", unsafe_allow_html=True)
     else:
-        full_prompt = prompt
+        # Trim the file content if it's too long
         if st.session_state.file_context:
-            full_prompt = f"{st.session_state.file_context}\n\nUser Question: {prompt}"
+            trimmed_context = trim_text(st.session_state.file_context, MAX_CHARS)
+            full_prompt = f"{trimmed_context}\n\nUser Question: {prompt}"
+        else:
+            full_prompt = prompt
+
         with st.spinner("Gemini is thinking..."):
             response = st.session_state.chat.send_message(full_prompt)
             st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
