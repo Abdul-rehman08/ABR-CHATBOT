@@ -259,9 +259,9 @@ prompt = st.chat_input("Type your message...")
 if prompt:
     st.markdown(f"<div class='chat-bubble-user'>{prompt}</div>", unsafe_allow_html=True)
 
-    # Check if the prompt asks about the author or creator
-    if any(keyword in prompt.lower() for keyword in ["author", "creator", "who made this", "who is the author", "made by", "created by"]):
-        # Respond with your name when the user asks about the author/creator
+    # Check if the prompt asks about the owner or creator
+    if any(keyword in prompt.lower() for keyword in ["owner", "who owns", "who made", "creator", "made by", "created by"]):
+        # Respond with your name when the user asks about the owner or creator
         response_text = "This AI was made by ABR - Abdul Rehman."
     else:
         # Combine file context with user prompt if file was uploaded
