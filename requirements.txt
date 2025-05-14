@@ -2,5 +2,5 @@ streamlit
 google-generativeai
 pdfplumber
 python-docx
-fpdf
+FPDF
 io
