@@ -210,4 +210,10 @@ if prompt:
         else:
             st.markdown(f"<div class='chat-bubble-bot'>❌ Could not detect file format. Try saying 'Convert to PDF', 'Make DOCX', etc.</div>", unsafe_allow_html=True)
     else:
+        full_prompt = prompt
+        if st.session_state.file_context:
+            full_prompt = f"{st.session_state.file_context}\n\nUser Question: {prompt}"
+        with st.spinner("Gemini is thinking..."):
+            response = st.session_state.chat.send_message(full_prompt)
+            st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
 
