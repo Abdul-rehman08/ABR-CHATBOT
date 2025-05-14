@@ -152,26 +152,31 @@ if uploaded_files:
     with st.expander("📄 View Combined File Content"):
         st.text_area("File Content", combined_text, height=250)
 
-# --- CONVERSION FUNCTION ---
+# --- CONVERSION FUNCTION (FIXED) ---
 def convert_text_to_file(text, format):
     buf = io.BytesIO()
     filename = f"converted_file.{format}"
 
     if format == "txt":
         buf.write(text.encode("utf-8"))
+
     elif format == "docx":
         doc = Document()
         for line in text.split("\n"):
             doc.add_paragraph(line)
         doc.save(buf)
+
     elif format == "pdf":
         pdf = FPDF()
         pdf.add_page()
         pdf.set_auto_page_break(auto=True, margin=15)
         pdf.set_font("Arial", size=12)
         for line in text.split("\n"):
-            pdf.cell(200, 10, txt=line.encode('latin-1', errors='ignore').decode('latin-1'), ln=True)
-        pdf.output(buf)
+            safe_line = line.encode('latin-1', errors='ignore').decode('latin-1')
+            pdf.cell(200, 10, txt=safe_line, ln=True)
+        pdf_bytes = pdf.output(dest="S").encode("latin-1")
+        buf.write(pdf_bytes)
+
     buf.seek(0)
     return filename, buf
 
@@ -205,9 +210,4 @@ if prompt:
         else:
             st.markdown(f"<div class='chat-bubble-bot'>❌ Could not detect file format. Try saying 'Convert to PDF', 'Make DOCX', etc.</div>", unsafe_allow_html=True)
     else:
-        full_prompt = prompt
-        if st.session_state.file_context:
-            full_prompt = f"{st.session_state.file_context}\n\nUser Question: {prompt}"
-        with st.spinner("Gemini is thinking..."):
-            response = st.session_state.chat.send_message(full_prompt)
-            st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
+
