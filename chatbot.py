@@ -175,12 +175,6 @@ def convert_text_to_file(text, format):
     buf.seek(0)
     return filename, buf
 
-# --- FUNCTION TO TRIM LONG TEXT ---
-MAX_CHARS = 20000  # Keep safely under Gemini input token limit
-
-def trim_text(text, max_chars):
-    return text if len(text) <= max_chars else text[-max_chars:]
-
 # --- CHAT INTERFACE ---
 st.markdown("<h2 style='text-align: center;'>🤖 ABRGPT Chat Assistant</h2>", unsafe_allow_html=True)
 
@@ -211,13 +205,9 @@ if prompt:
         else:
             st.markdown(f"<div class='chat-bubble-bot'>❌ Could not detect file format. Try saying 'Convert to PDF', 'Make DOCX', etc.</div>", unsafe_allow_html=True)
     else:
-        # Trim the file content if it's too long
+        full_prompt = prompt
         if st.session_state.file_context:
-            trimmed_context = trim_text(st.session_state.file_context, MAX_CHARS)
-            full_prompt = f"{trimmed_context}\n\nUser Question: {prompt}"
-        else:
-            full_prompt = prompt
-
+            full_prompt = f"{st.session_state.file_context}\n\nUser Question: {prompt}"
         with st.spinner("Gemini is thinking..."):
             response = st.session_state.chat.send_message(full_prompt)
             st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
