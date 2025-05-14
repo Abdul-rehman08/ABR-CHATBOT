@@ -90,7 +90,7 @@ genai.configure(api_key="AIzaSyA5fU4CV5mfbk5pYleH176m_tHmpLp1XQY")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # --- PAGE SETTINGS ---
-st.set_page_config(page_title="ABRGPT", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="ABRGPT", page_icon="cabr.png", layout="wide")
 st.markdown(
     "<style>html, body, [class*='css']  { font-family: 'Segoe UI', sans-serif; }</style>",
     unsafe_allow_html=True
