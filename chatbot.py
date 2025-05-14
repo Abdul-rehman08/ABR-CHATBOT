@@ -259,17 +259,25 @@ prompt = st.chat_input("Type your message...")
 if prompt:
     st.markdown(f"<div class='chat-bubble-user'>{prompt}</div>", unsafe_allow_html=True)
 
-    # Combine file context with user prompt if file was uploaded
-    full_prompt = prompt
-    if st.session_state.file_context:
-        full_prompt = (
-            f"You are given the following document content:\n\n"
-            f"{st.session_state.file_context}\n\n"
-            f"Now answer this question based on the content above:\n{prompt}"
-        )
+    # Check if the prompt asks about the author or creator
+    if any(keyword in prompt.lower() for keyword in ["author", "creator", "who made this", "who is the author", "made by", "created by"]):
+        # Respond with your name when the user asks about the author/creator
+        response_text = "This AI was made by ABR - Abdul Rehman."
+    else:
+        # Combine file context with user prompt if file was uploaded
+        full_prompt = prompt
+        if st.session_state.file_context:
+            full_prompt = (
+                f"You are given the following document content:\n\n"
+                f"{st.session_state.file_context}\n\n"
+                f"Now answer this question based on the content above:\n{prompt}"
+            )
 
-    with st.spinner("Gemini is thinking..."):
-        response = st.session_state.chat.send_message(full_prompt)
-        st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
+        with st.spinner("Gemini is thinking..."):
+            response = st.session_state.chat.send_message(full_prompt)
+            response_text = response.text
+
+    # Display the response
+    st.markdown(f"<div class='chat-bubble-bot'>{response_text}</div>", unsafe_allow_html=True)
 
 
