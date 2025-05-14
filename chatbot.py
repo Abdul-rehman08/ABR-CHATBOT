@@ -84,6 +84,7 @@ import streamlit as st
 import google.generativeai as genai
 import pdfplumber  # <-- Replaces fitz
 import docx
+from PIL import Image  # Importing Pillow to handle images
 
 # --- CONFIGURE API ---
 genai.configure(api_key="YOUR_API_KEY")
@@ -130,12 +131,11 @@ with st.sidebar:
     if st.button("🧹 New Chat"):
         st.session_state.chat = model.start_chat(history=[])
         st.session_state.file_context = ""
-        st.session_state.chat_history = []  # Add chat history initialization
         st.rerun()
 
-    if "chat_history" in st.session_state:
+    if "chat" in st.session_state:
         history_text = "\n".join(
-            f"{msg['role']}: {msg['text']}" for msg in st.session_state.chat_history
+            f"{msg.role}: {msg.parts[0].text}" for msg in st.session_state.chat.history
         )
         st.download_button("💾 Download Chat", history_text, file_name="gemini_chat.txt")
 
@@ -144,11 +144,9 @@ if "chat" not in st.session_state:
     st.session_state.chat = model.start_chat(history=[])
 if "file_context" not in st.session_state:
     st.session_state.file_context = ""
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []  # Initialize chat history
 
 # --- FILE UPLOAD ---
-uploaded_file = st.file_uploader("📎 Upload a document", type=["pdf", "docx", "txt"])
+uploaded_file = st.file_uploader("📎 Upload a document (PDF, DOCX, TXT, or Image)", type=["pdf", "docx", "txt", "png", "jpg", "jpeg"])
 if uploaded_file:
     file_text = ""
     if uploaded_file.type == "application/pdf":
@@ -160,6 +158,11 @@ if uploaded_file:
         file_text = "\n".join([para.text for para in doc.paragraphs])
     elif uploaded_file.type == "text/plain":
         file_text = uploaded_file.read().decode("utf-8")
+    elif uploaded_file.type in ["image/png", "image/jpeg", "image/jpg"]:
+        # Display the uploaded image
+        image = Image.open(uploaded_file)
+        st.image(image, caption="Uploaded Image", use_column_width=True)
+        st.session_state.file_context = "An image has been uploaded."
 
     st.session_state.file_context = file_text
     st.success("✅ File uploaded and processed successfully!")
@@ -170,17 +173,14 @@ if uploaded_file:
 st.markdown("<h2 style='text-align: center;'>🤖 ABRGPT Chat Assistant</h2>", unsafe_allow_html=True)
 
 # --- DISPLAY CHAT HISTORY ---
-if st.session_state.chat_history:
-    for msg in st.session_state.chat_history:
-        bubble_class = "chat-bubble-user" if msg["role"] == "user" else "chat-bubble-bot"
-        st.markdown(f"<div class='{bubble_class}'>{msg['text']}</div>", unsafe_allow_html=True)
+for msg in st.session_state.chat.history:
+    bubble_class = "chat-bubble-user" if msg.role == "user" else "chat-bubble-bot"
+    st.markdown(f"<div class='{bubble_class}'>{msg.parts[0].text}</div>", unsafe_allow_html=True)
 
 # --- USER PROMPT INPUT ---
 prompt = st.chat_input("Type your message...")
 
 if prompt:
-    # Save the user prompt in the history
-    st.session_state.chat_history.append({"role": "user", "text": prompt})
     st.markdown(f"<div class='chat-bubble-user'>{prompt}</div>", unsafe_allow_html=True)
 
     # Combine file context with user prompt if file was uploaded
@@ -194,8 +194,5 @@ if prompt:
 
     with st.spinner("Gemini is thinking..."):
         response = st.session_state.chat.send_message(full_prompt)
-
-    # Save the bot response in the history
-    st.session_state.chat_history.append({"role": "bot", "text": response.text})
-    st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
 
