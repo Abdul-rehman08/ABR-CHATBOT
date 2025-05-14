@@ -86,7 +86,7 @@ import pdfplumber  # <-- Replaces fitz
 import docx
 
 # --- CONFIGURE API ---
-genai.configure(api_key="AIzaSyA5fU4CV5mfbk5pYleH176m_tHmpLp1XQY")
+genai.configure(api_key="YOUR_API_KEY")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # --- PAGE SETTINGS ---
@@ -130,11 +130,12 @@ with st.sidebar:
     if st.button("🧹 New Chat"):
         st.session_state.chat = model.start_chat(history=[])
         st.session_state.file_context = ""
+        st.session_state.chat_history = []  # Add chat history initialization
         st.rerun()
 
-    if "chat" in st.session_state:
+    if "chat_history" in st.session_state:
         history_text = "\n".join(
-            f"{msg.role}: {msg.parts[0].text}" for msg in st.session_state.chat.history
+            f"{msg['role']}: {msg['text']}" for msg in st.session_state.chat_history
         )
         st.download_button("💾 Download Chat", history_text, file_name="gemini_chat.txt")
 
@@ -143,6 +144,8 @@ if "chat" not in st.session_state:
     st.session_state.chat = model.start_chat(history=[])
 if "file_context" not in st.session_state:
     st.session_state.file_context = ""
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []  # Initialize chat history
 
 # --- FILE UPLOAD ---
 uploaded_file = st.file_uploader("📎 Upload a document", type=["pdf", "docx", "txt"])
@@ -167,14 +170,17 @@ if uploaded_file:
 st.markdown("<h2 style='text-align: center;'>🤖 ABRGPT Chat Assistant</h2>", unsafe_allow_html=True)
 
 # --- DISPLAY CHAT HISTORY ---
-for msg in st.session_state.chat.history:
-    bubble_class = "chat-bubble-user" if msg.role == "user" else "chat-bubble-bot"
-    st.markdown(f"<div class='{bubble_class}'>{msg.parts[0].text}</div>", unsafe_allow_html=True)
+if st.session_state.chat_history:
+    for msg in st.session_state.chat_history:
+        bubble_class = "chat-bubble-user" if msg["role"] == "user" else "chat-bubble-bot"
+        st.markdown(f"<div class='{bubble_class}'>{msg['text']}</div>", unsafe_allow_html=True)
 
 # --- USER PROMPT INPUT ---
 prompt = st.chat_input("Type your message...")
 
 if prompt:
+    # Save the user prompt in the history
+    st.session_state.chat_history.append({"role": "user", "text": prompt})
     st.markdown(f"<div class='chat-bubble-user'>{prompt}</div>", unsafe_allow_html=True)
 
     # Combine file context with user prompt if file was uploaded
@@ -188,6 +194,8 @@ if prompt:
 
     with st.spinner("Gemini is thinking..."):
         response = st.session_state.chat.send_message(full_prompt)
-        st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
-    
+
+    # Save the bot response in the history
+    st.session_state.chat_history.append({"role": "bot", "text": response.text})
+    st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
 
