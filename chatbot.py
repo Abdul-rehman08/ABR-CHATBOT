@@ -161,7 +161,7 @@ if uploaded_file:
     elif uploaded_file.type in ["image/png", "image/jpeg", "image/jpg"]:
         # Display the uploaded image
         image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Image", use_column_width=True)
+        st.image(image, caption="Uploaded Image", use_container_width=True)
         st.session_state.file_context = "An image has been uploaded."
 
     st.session_state.file_context = file_text
