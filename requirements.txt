@@ -3,4 +3,3 @@ google-generativeai
 pdfplumber
 python-docx
 fpdf
-pil
