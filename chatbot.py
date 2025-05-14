@@ -192,7 +192,13 @@ if prompt:
             f"Now answer this question based on the content above:\n{prompt}"
         )
 
-    with st.spinner("Gemini is thinking..."):
-        response = st.session_state.chat.send_message(full_prompt)
-        st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
+    # Debugging output to check the full prompt being sent
+    st.write("Full Prompt being sent:", full_prompt)  # Debugging output
+
+    try:
+        with st.spinner("Gemini is thinking..."):
+            response = st.session_state.chat.send_message(full_prompt)
+            st.markdown(f"<div class='chat-bubble-bot'>{response.text}</div>", unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Error: {e}")
 
